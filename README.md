@@ -19,8 +19,8 @@ In all cases when running the executable you should see lots of output with the 
 # Functionality
 Functions defined (#include "time_local.h"):
 ~~~
-	char * strptime(const char *s, const char *format, struct tm *tm);// in strptime.c 
-	size_t strftime(char *s, size_t maxsize, const char *format, const struct tm *timeptr); // in strftime.c
+	char * ya_strptime(const char *s, const char *format, struct tm *tm);// in strptime.c 
+	size_t ya_strftime(char *s, size_t maxsize, const char *format, const struct tm *timeptr); // in strftime.c
   
 	time_t ya_mktime(struct tm *tp); /* fully functional version of mktime() that returns secs and takes (and changes if necessary) tp */
         void sec_to_tm(time_t t,struct tm *tp); // reverse of ya_mktime, converts secs since epoch to the numbers of tp
@@ -147,3 +147,9 @@ Z  time zone name. eg “EDT”, "UTC", "GMT","AKST","ET" etc.  2, 3 or 4 letter
 % Replaced by %.
 ~~~
 The file main.c gives lots of examples.
+# Versions
+1v0 - 1st release
+
+1v1 - 30/5/2022 
+    Main functions renamed ya_strptime() and ya_strftime() to and issues with existing system libraries (especially for C++).
+    Added manual (date-time.docx).
