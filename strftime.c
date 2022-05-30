@@ -1,5 +1,6 @@
 /*  strftime.c
 	==========
+	Note that the function defined here is called ya_strftime() to avoid issues with tryng to rename an existing strftime() function (especially in C++).
 
    See comments at the start of strptime.c for the format options supported (basically C99 in the C locale with a couple of extensions).
     
@@ -122,7 +123,8 @@
 // #include <math.h>
 #include "time_local.h"
 
-#define YEAR0LEAP /* if defined make year 0 a leap year (if not defined then its not) */
+#define YEAR0LEAP /* if defined make year 0 a leap year (if not defined then its not). This should normally be defined as ISO 8601 says year 0 is a leap year */
+
 /* defaults: season to taste , note tests below use the fact if these are defined or not, the value does not matter  */
 // #define SUNOS_EXT		/* stuff in SunOS strftime routine */
 // #define VMS_EXT			/* include %v for VMS date format */
@@ -542,7 +544,7 @@ ampm(int index)
 
 
 /* strftime() --- produce formatted time */
-size_t strftime(char *s, size_t maxsize, const char *format, const struct tm *timeptr)
+size_t ya_strftime(char *s, size_t maxsize, const char *format, const struct tm *timeptr)
 {
 	char *endp = s + maxsize;
 	char *start = s;
@@ -725,10 +727,10 @@ size_t strftime(char *s, size_t maxsize, const char *format, const struct tm *ti
 			 * Per the ISO 2011 C standard, it is now this:
 			 */
 #ifdef HAVE_NL_LANGINFO
-			strftime(tbuf, sizeof tbuf, nl_langinfo(D_T_FMT), timeptr);
+			ya_strftime(tbuf, sizeof tbuf, nl_langinfo(D_T_FMT), timeptr);
 #else
 			{ const char *f="%a %b %e %T %Y";// done this way to avoid gcc -Wformat= errors in line below
-			 strftime(tbuf, sizeof tbuf, f, timeptr);
+			 ya_strftime(tbuf, sizeof tbuf, f, timeptr);
 			}
 #endif
 			break;
@@ -757,7 +759,7 @@ size_t strftime(char *s, size_t maxsize, const char *format, const struct tm *ti
 			break;
 
 		case 'D':	/* date as %m/%d/%y */
-			strftime(tbuf, sizeof tbuf, "%m/%d/%y", timeptr);
+			ya_strftime(tbuf, sizeof tbuf, "%m/%d/%y", timeptr);
 			break;
 
 		case 'e':	/* day of month, blank padded */
@@ -808,7 +810,7 @@ size_t strftime(char *s, size_t maxsize, const char *format, const struct tm *ti
 			 * It must be at least 10.
 			 */
 			char m_d[10];
-			strftime(m_d, sizeof m_d, "-%m-%d", timeptr);
+			ya_strftime(m_d, sizeof m_d, "-%m-%d", timeptr);
 			size_t min_fw = 10;
 
 			if (pad != '\0' && fw > 0) {
@@ -822,7 +824,7 @@ size_t strftime(char *s, size_t maxsize, const char *format, const struct tm *ti
 			iso_8601_2000_year(tbuf, timeptr->tm_year + 1900, fw);
 			strcat(tbuf, m_d);
 #else
-			strftime(tbuf, sizeof tbuf, "%Y-%m-%d", timeptr);
+			ya_strftime(tbuf, sizeof tbuf, "%Y-%m-%d", timeptr);
 #endif /* POSIX_2008 */
 		}
 			break;
@@ -924,11 +926,11 @@ size_t strftime(char *s, size_t maxsize, const char *format, const struct tm *ti
 			break;
 
 		case 'r':	/* time as %I:%M:%S %p */
-			strftime(tbuf, sizeof tbuf, "%I:%M:%S %p", timeptr);
+			ya_strftime(tbuf, sizeof tbuf, "%I:%M:%S %p", timeptr);
 			break;
 
 		case 'R':	/* time as %H:%M */
-			strftime(tbuf, sizeof tbuf, "%H:%M", timeptr);
+			ya_strftime(tbuf, sizeof tbuf, "%H:%M", timeptr);
 			break;
 			
 		case 's':	/* time as seconds since the Epoch */
@@ -947,7 +949,7 @@ size_t strftime(char *s, size_t maxsize, const char *format, const struct tm *ti
 
 		case 'T':	/* time as %H:%M:%S */
 		the_time:
-			strftime(tbuf, sizeof tbuf, "%H:%M:%S", timeptr);
+			ya_strftime(tbuf, sizeof tbuf, "%H:%M:%S", timeptr);
 			break;
 
 		case 'u':
@@ -993,15 +995,15 @@ size_t strftime(char *s, size_t maxsize, const char *format, const struct tm *ti
 			 * Now, per the 2011 C standard (C99), this is: "%m/%d/%y"
 			 */
 #ifdef HAVE_NL_LANGINFO
-			strftime(tbuf, sizeof tbuf, nl_langinfo(D_FMT), timeptr);
+			ya_strftime(tbuf, sizeof tbuf, nl_langinfo(D_FMT), timeptr);
 #else
-			strftime(tbuf, sizeof tbuf, "%m/%d/%y", timeptr);
+			ya_strftime(tbuf, sizeof tbuf, "%m/%d/%y", timeptr);
 #endif
 			break;
 
 		case 'X':	/* appropriate time representation */
 #ifdef HAVE_NL_LANGINFO
-			strftime(tbuf, sizeof tbuf, nl_langinfo(T_FMT), timeptr);
+			ya_strftime(tbuf, sizeof tbuf, nl_langinfo(T_FMT), timeptr);
 #else
 			goto the_time; /* same as %T */
 #endif
@@ -1110,7 +1112,7 @@ size_t strftime(char *s, size_t maxsize, const char *format, const struct tm *ti
 #ifdef HPUX_EXT
 		case 'N':	/* Emperor/Era name */
 #ifdef HAVE_NL_LANGINFO
-			strftime(tbuf, sizeof tbuf, nl_langinfo(ERA), timeptr);
+			ya_strftime(tbuf, sizeof tbuf, nl_langinfo(ERA), timeptr);
 #else
 			/* this is essentially the same as the century */
 			goto century;	/* %C */

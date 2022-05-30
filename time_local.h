@@ -1,6 +1,7 @@
 /* time_local.h
    defines strftime() for situations (like on windows) where its not already defined
    must be included after <time.h> as that defines struct tm
+   Note actually defines ya_strptime(), ya_strftime() and  ya_mktime() to avoid issues with trying to redefine strptime(), strftime() and mktime()
 */
 #ifndef __TIME_LOCAL_H
  #define __TIME_LOCAL_H
@@ -17,8 +18,8 @@
      int strnicmp( const char * s1, const char * s2, size_t n );
     #endif 
 	
-	char * strptime(const char *s, const char *format, struct tm *tm);// in strptime.c 
-	size_t strftime(char *s, size_t maxsize, const char *format, const struct tm *timeptr); // in strftime.c
+	char * ya_strptime(const char *s, const char *format, struct tm *tm);// in strptime.c 
+	size_t ya_strftime(char *s, size_t maxsize, const char *format, const struct tm *timeptr); // in strftime.c
 	
 	struct strp_tz_struct
 		{
@@ -46,6 +47,7 @@
 	int day_of_week(int64_t year,int month, int mday); /* returns day of week(0-6), 0=sunday given year (with no offset eg 1970), month (0-11, 0=jan) and day of month (1-31) */
 	void month_day(int64_t year, int yearday, int *pmonth, int *pday);// year with no offset and days in year (0->), sets pmonth (0->11) and pday(1-31)
 	bool is_leap(int64_t year); /* returns true if year [with no offset] is a leap year */
+	bool check_tm(struct tm *tm);/* returns true only if all elements of tm are valid */
 	extern const char * strp_weekdays[]; // strings - names of weekdays (Monday,...)
 	extern const char * strp_monthnames[] ;// strings - names of Months (January,...)
  #ifdef __cplusplus

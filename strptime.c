@@ -1,5 +1,6 @@
 /* 	strptime.c
 	========== 
+	Note - to avoid issues (especially with C++) the function is called ya_strptime().
 
    This file was created by starting from https://stackoverflow.com/questions/667250/strptime-in-windows on 23/3/2022 
    A significant number of changes mave been made, initially to make it compile for Windows with C99 (it was originally in C++) using TDM-GCC 10.3.0,
@@ -125,7 +126,8 @@ y The last two digits of the year.
    leading zeros shall be permitted but shall not be required.
 
 Y The full year If POSIX_2008 defined then {4} [0,9999]; leading zeros shall be permitted but shall not be required. 
-  If POSIX_2008 is not defined then allow an optional sign followed by a number of digits (which can be more than 4 - limits are +391220960 , -39171945 which matches %s ).
+  If POSIX_2008 is not defined then allow an optional sign followed by a number of digits 
+  (which can be more than 4 - limits are +MAX_INT+1900 (2,147,485,547) to -MAX_INT+1900 (-2,147,481,747) which matches %s ).
 z Time zone offset from UTC; a leading plus sign stands for east of UTC, a minus sign or west of UTC,
   hours and minutes follow with two digits each and no delimiter between them (as in ISO8601 & common form for RFC 822 date headers). eg “-0500” or "+0000". The sign is always required.
   The value input by %z is remembered and will be output by strftime(). If a value has not be set my the immediatly previous strptime() then strftime() will use the value supplied by the OS.
@@ -138,9 +140,6 @@ Z  time zone name. eg “EDT”, "UTC", "GMT","AKST","ET" etc.  2, 3 or 4 letters is
 It assumes the C locale (so effectively has no locale support, the E and O modifiers are just ignored as per the C99 standard).
 It does not support a multibyte character sequence for the format string. 
 */
-#if defined( __GNUC__) && defined (__linux) 
- #define _GNU_SOURCE /* needed to enable exp10() for gcc */
-#endif 
 #include <stdio.h>
 #include <stdlib.h> /* for strtoul() etc */
 #include <string.h>
@@ -222,7 +221,21 @@ void init_strp_tz(struct strp_tz_struct *d) /* initialise d to special values so
  d->f_secs_p10=strp_tz_default;
  d->initialised=1; // now initialised
 }
- 
+
+bool check_tm(struct tm *tm)
+{ // check each field of tm. returns true if all OK, otherwise returns false
+ bool OK=true;
+ if(tm->tm_sec<0 || tm->tm_sec>60) OK=false;   // 60 for leap seconds
+ if(tm->tm_min<0 || tm->tm_min>59) OK=false;
+ if(tm->tm_hour<0 || tm->tm_hour>23) OK=false;
+ if(tm->tm_mday<1 || tm->tm_mday>31) OK=false; // lower limit is strictly 1, but default value is 0
+ if(tm->tm_mon<0 || tm->tm_mon>11) OK=false;
+ // tm_year can have any integer value
+ if(tm->tm_wday<0 || tm->tm_wday>6) OK=false;
+ if(tm->tm_yday<0 || tm->tm_yday>365) OK=false;
+ // tm_isdst can be any value
+ return OK;
+}
     
 bool strp_atoi(const char **s, int *result, unsigned int low, unsigned int high, unsigned int offset)
     {
@@ -248,7 +261,7 @@ bool strp_atoi(const char **s, int *result, unsigned int low, unsigned int high,
     return false; // invalid number found , don't change s        
     }
 
-char * strptime(const char *s, const char *format, struct tm *tm)
+char * ya_strptime(const char *s, const char *format, struct tm *tm)
     {
     bool valid = true;
     bool per_C_found=false; // set when %C found (1st 2 digits year )
@@ -319,7 +332,7 @@ char * strptime(const char *s, const char *format, struct tm *tm)
                     }
                 break;
             case 'c': /* date and time C99 in C locale defines this to be %a %b %e %T %Y */
-            	{char *r=strptime(s,"%a %b %e %T %Y", tm);
+            	{char *r=ya_strptime(s,"%a %b %e %T %Y", tm);
             	 valid=r!=NULL;
             	 if(valid) s=r;
             	}
@@ -360,7 +373,7 @@ char * strptime(const char *s, const char *format, struct tm *tm)
                 break;   				           
             case 'x': /* same as %D for now */
             case 'D': /* Equivalent to %m/%d/%y. (This is the American style date) */
-            	{char *r=strptime(s,"%m/%d/%y", tm);
+            	{char *r=ya_strptime(s,"%m/%d/%y", tm);
             	 valid=r!=NULL;
             	 if(valid) s=r;
             	}               
@@ -385,7 +398,7 @@ char * strptime(const char *s, const char *format, struct tm *tm)
             	}
             	break;
             case 'F': /* %F Equivalent to %Y-%m-%d (the iso 8601 date format) */
-            	{char *r=strptime(s,"%Y-%m-%d", tm);
+            	{char *r=ya_strptime(s,"%Y-%m-%d", tm);
             	 valid=r!=NULL;
             	 if(valid) s=r;
             	}               
@@ -458,13 +471,13 @@ char * strptime(const char *s, const char *format, struct tm *tm)
                     valid = false;
                 break;
             case 'r': // 12 hour clock %I:%M:%S %p
-            	{char *r=strptime(s,"%I:%M:%S %p", tm);
+            	{char *r=ya_strptime(s,"%I:%M:%S %p", tm);
             	 valid=r!=NULL;
             	 if(valid) s=r;
             	}      
                 break;
             case 'R': // %H:%M
-            	{char *r=strptime(s,"%H:%M", tm);
+            	{char *r=ya_strptime(s,"%H:%M", tm);
             	 valid=r!=NULL;
             	 if(valid) s=r;
             	}            
@@ -534,7 +547,7 @@ char * strptime(const char *s, const char *format, struct tm *tm)
                 break; 							        
             case 'X' : /* same as T */                
             case 'T': // %H:%M:%S
-            	{char *r=strptime(s,"%H:%M:%S", tm);
+            	{char *r=ya_strptime(s,"%H:%M:%S", tm);
             	 valid=r!=NULL;
             	 if(valid) s=r;
             	}      

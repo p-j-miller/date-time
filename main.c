@@ -56,6 +56,14 @@ In all cases when running the executable you should see lots of output with the 
 
 // #define POSIX_2008 /* if defined the %Y is limited to 4 digits */ 
 
+/* the two #defines below sets this code to use the new functions defined in strptime.c & strftime.c rather than the ones (that might be) in the standard libraries */
+/* note because of the extensions present in our new functions (and tested by the code below), its extremely unlikely implementations in the standard libraries
+   will pass all the test cases */
+// char * ya_strptime(const char *s, const char *format, struct tm *tm);
+#define strptime(s,f,m) ya_strptime(s,f,m) 
+// size_t ya_strftime(char *s, size_t maxsize, const char *format, const struct tm *timeptr); 
+#define strftime(s,m,f,t) ya_strftime(s,m,f,t) 
+
 unsigned int nos_tests=0;
 unsigned int errs=0;
 
@@ -119,15 +127,10 @@ void normal_text(void)
 void display_tm(void)
 { // check each field of tm and display them via printf - in red if out of valid range. no newline at the end
  bool OK=true;
- if(tm.tm_sec<0 || tm.tm_sec>60) OK=false;
- if(tm.tm_min<0 || tm.tm_min>59) OK=false;
- if(tm.tm_hour<0 || tm.tm_hour>23) OK=false;
- if(tm.tm_mday<0 || tm.tm_mday>31) OK=false; // lower limit is strictly 1, but default value is 0 so we can only flag an error if < 0 rather than < 1, flag 0 with an ! below
- if(tm.tm_mon<0 || tm.tm_mon>11) OK=false;
- // tm_year can have any integer value
- if(tm.tm_wday<0 || tm.tm_wday>6) OK=false;
- if(tm.tm_yday<0 || tm.tm_yday>365) OK=false;
- // tm_isdst can be any value
+ int mday=tm.tm_mday;
+ if(mday==0) tm.tm_mday=1; // lower limit is strickly 1, but 0 is default so we deal with this case in printf below without flagging it as an error
+ OK=check_tm(&tm); // check tm is all valid
+ tm.tm_mday=mday; // restore mday
  if(!OK) 
  	{red_text();
  	 ++errs;
