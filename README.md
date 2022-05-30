@@ -151,5 +151,5 @@ The file main.c gives lots of examples.
 1v0 - 1st release
 
 1v1 - 30/5/2022 
-    Main functions renamed ya_strptime() and ya_strftime() to and issues with existing system libraries (especially for C++).
+    Main functions renamed ya_strptime() and ya_strftime() to fix potential issues with existing system libraries (especially for C++).
     Added manual (date-time.docx).
